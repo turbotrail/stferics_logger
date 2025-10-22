@@ -37,8 +37,9 @@ jobs:
           CRON_CMD="*/10 * * * * cd $TARGET_DIR && $VENV_DIR/bin/python vlf_cron_sferic_logger.py >> $LOG_DIR/vlf.log 2>&1"
 
           TMP_FILE=$(mktemp)
-          crontab -l 2>/dev/null | grep -v "vlf_cron_sferic_logger.py" > "$TMP_FILE"
-          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+          if crontab -l >/dev/null 2>&1; then
+            crontab -l | grep -v "vlf_cron_sferic_logger.py" > "$TMP_FILE" || true
+          else
             : > "$TMP_FILE"
           fi
           echo "$CRON_CMD" >> "$TMP_FILE"
