@@ -24,7 +24,7 @@ def record_audio(duration=RECORD_SECONDS, fs=SAMPLE_RATE):
     print(f"Saved: {filename}")
     return filename, timestamp
 
-def plot_spectrogram(wav_path, timestamp):
+def plot_spectrogram_usingmod(wav_path, timestamp):
     img_path = os.path.join(FOLDER, f"{timestamp}_spectrogram.png")
     fig, ax, f, t, Sxx = plot_spectrogram(
         wav_path,
@@ -50,7 +50,7 @@ def plot_spectrogram(wav_path, timestamp):
 
 def main():
     wav_path, timestamp = record_audio()
-    plot_spectrogram(wav_path, timestamp)
+    plot_spectrogram_usingmod(wav_path, timestamp)
 
 if __name__ == "__main__":
     main()
