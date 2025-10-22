@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import sounddevice as sd
 import soundfile as sf
 from datetime import datetime
-from vlf_spectrogram import plot_spectrogram as render_spectrogram
+from vlf_spectrogram import plot_spectrogram
 
 RECORD_SECONDS = 120  # 2 minutes
 SAMPLE_RATE = 44100
@@ -25,9 +25,10 @@ def record_audio(duration=RECORD_SECONDS, fs=SAMPLE_RATE):
     return filename, timestamp
 
 def plot_spectrogram(wav_path, timestamp):
-    fig, ax, f, t, Sxx = render_spectrogram(
+    img_path = os.path.join(FOLDER, f"{timestamp}_spectrogram.png")
+    fig, ax, f, t, Sxx = plot_spectrogram(
         wav_path,
-        output=None,
+        output=img_path,
         max_freq=MAX_FREQ,
         return_fig=True
     )
@@ -42,8 +43,6 @@ def plot_spectrogram(wav_path, timestamp):
     # Tag burst times
     for bt in burst_times:
         ax.axvline(x=bt, color='cyan', linestyle='--', linewidth=0.5)
-
-    img_path = os.path.join(FOLDER, f"{timestamp}_spectrogram.png")
     fig.savefig(img_path)
     plt.close(fig)
     print(f"Spectrogram saved: {img_path}")
