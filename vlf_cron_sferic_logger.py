@@ -30,21 +30,7 @@ def plot_spectrogram_usingmod(wav_path, timestamp):
         wav_path,
         output=img_path,
         max_freq=MAX_FREQ,
-        return_fig=True
     )
-    Sxx_dB = 10 * np.log10(Sxx + 1e-10)
-
-    # Detect bursts
-    burst_times = []
-    for i in range(Sxx_dB.shape[1]):
-        if np.any(Sxx_dB[:, i] > THRESHOLD_DB):
-            burst_times.append(t[i])
-
-    # Tag burst times
-    for bt in burst_times:
-        ax.axvline(x=bt, color='cyan', linestyle='--', linewidth=0.5)
-    fig.savefig(img_path)
-    plt.close(fig)
     print(f"Spectrogram saved: {img_path}")
     return img_path
 

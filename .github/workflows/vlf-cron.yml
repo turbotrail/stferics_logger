@@ -34,7 +34,7 @@ jobs:
           VENV_DIR="$TARGET_DIR/venv"
           LOG_DIR="$TARGET_DIR/logs"
           mkdir -p "$LOG_DIR"
-          CRON_CMD="*/10 * * * * cd $TARGET_DIR && $VENV_DIR/bin/python vlf_cron_sferic_logger.py >> $LOG_DIR/vlf.log 2>&1"
+          CRON_CMD="*/10 18-23,0-6 * * * cd $TARGET_DIR && $VENV_DIR/bin/python vlf_cron_sferic_logger.py >> $LOG_DIR/vlf.log 2>&1"
 
           TMP_FILE=$(mktemp)
           if crontab -l >/dev/null 2>&1; then
