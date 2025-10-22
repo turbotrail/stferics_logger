@@ -1,45 +1,137 @@
 import os
+import queue
+from datetime import datetime, date, time, timedelta
+
 import numpy as np
-import matplotlib.pyplot as plt
 import sounddevice as sd
 import soundfile as sf
-from datetime import datetime
-from vlf_spectrogram import plot_spectrogram
 
-print(sd.query_devices())
-sd.default.device = (1, 1)
+# Optional: keep import available; spectrogram generation currently disabled
+# from vlf_spectrogram import plot_spectrogram
 
-RECORD_SECONDS = 120  # 2 minutes
+
+# Configure your input/output devices if needed
+# You can change this to match your system devices
+try:
+    print(sd.query_devices())
+    # Example: (input_device_index, output_device_index)
+    sd.default.device = (1, 1)
+except Exception as e:
+    print(f"Audio device setup warning: {e}")
+
+
 SAMPLE_RATE = 44100
-THRESHOLD_DB = -100  # dB threshold for burst detection
-MAX_FREQ = 10000
+CHANNELS = 1
 FOLDER = "recordings"
+
+# Night window
+WINDOW_START = time(18, 0)  # 18:00 local time
+WINDOW_END = time(6, 0)     # 06:00 next day
+TOTAL_HOURS = 12
+SEGMENT_HOURS = 1
 
 os.makedirs(FOLDER, exist_ok=True)
 
-def record_audio(duration=RECORD_SECONDS, fs=SAMPLE_RATE):
-    print(f"Recording {duration} seconds...")
-    recording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='float32')
-    sd.wait()
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = os.path.join(FOLDER, f"{timestamp}.wav")
-    sf.write(filename, recording, fs)
-    print(f"Saved: {filename}")
-    return filename, timestamp
 
-def plot_spectrogram_usingmod(wav_path, timestamp):
-    img_path = os.path.join(FOLDER, f"{timestamp}_spectrogram.png")
-    fig, ax, f, t, Sxx = plot_spectrogram(
-        wav_path,
-        output=img_path,
-        max_freq=MAX_FREQ,
-    )
-    print(f"Spectrogram saved: {img_path}")
-    return img_path
+def next_window_start(now: datetime) -> datetime:
+    """Return the next datetime at 18:00 local time from 'now'."""
+    today_start = datetime.combine(now.date(), WINDOW_START)
+    if now <= today_start:
+        return today_start
+    # Otherwise next day 18:00
+    return today_start + timedelta(days=1)
+
+
+def window_end_for(start_dt: datetime) -> datetime:
+    """Given a start at 18:00, return the end (next day at 06:00)."""
+    # Start is always at 18:00, so end is next day 06:00
+    next_day = start_dt.date() + timedelta(days=1)
+    return datetime.combine(next_day, WINDOW_END)
+
+
+def timestamp_for_file(dt: datetime) -> str:
+    return dt.strftime("%Y%m%d_%H%M%S")
+
+
+def record_stream_to_file(filename: str, duration_seconds: int, fs: int = SAMPLE_RATE, channels: int = CHANNELS):
+    """
+    Record audio using a streaming callback and write directly to disk to avoid
+    large memory allocations. Stops after duration_seconds.
+    """
+    q: queue.Queue[np.ndarray] = queue.Queue()
+
+    def callback(indata, frames, time_info, status):
+        if status:
+            print(f"Stream status: {status}")
+        # Copy to avoid referencing underlying buffer
+        q.put(indata.copy())
+
+    frames_to_write = duration_seconds * fs
+    written = 0
+
+    with sf.SoundFile(
+        filename,
+        mode="w",
+        samplerate=fs,
+        channels=channels,
+        subtype="PCM_16",
+    ) as file, sd.InputStream(
+        samplerate=fs,
+        channels=channels,
+        dtype="float32",
+        callback=callback,
+    ):
+        print(f"Recording to {filename} for {duration_seconds} seconds...")
+        while written < frames_to_write:
+            data = q.get()
+            # Ensure we don't exceed the intended duration
+            remaining = frames_to_write - written
+            if len(data) > remaining:
+                data = data[:remaining]
+            file.write(data)
+            written += len(data)
+        print(f"Saved: {filename}")
+
+
+def run_night_recording():
+    now = datetime.now()
+    start_dt = next_window_start(now)
+    if now < start_dt:
+        wait = (start_dt - now).total_seconds()
+        print(f"Waiting until window start at {start_dt} (~{int(wait)}s)...")
+        # Busy-wait with sleep intervals to keep simple and portable
+        import time as _time
+        while True:
+            now = datetime.now()
+            if now >= start_dt:
+                break
+            _time.sleep(min(60, max(1, int((start_dt - now).total_seconds()))))
+
+    end_dt = window_end_for(start_dt)
+    print(f"Recording window: {start_dt} -> {end_dt} ({TOTAL_HOURS} hours)")
+
+    segment_seconds = SEGMENT_HOURS * 3600
+    segment_start = start_dt
+    segments = 0
+
+    while segment_start < end_dt and segments < TOTAL_HOURS:
+        segment_end = min(segment_start + timedelta(hours=SEGMENT_HOURS), end_dt)
+        duration = int((segment_end - segment_start).total_seconds())
+        ts = timestamp_for_file(segment_start)
+        filename = os.path.join(FOLDER, f"{ts}.wav")
+        try:
+            record_stream_to_file(filename, duration_seconds=duration)
+        except Exception as e:
+            print(f"Error during recording for segment starting {segment_start}: {e}")
+        segment_start = segment_end
+        segments += 1
+
+    print("Night recording complete.")
+
 
 def main():
-    wav_path, timestamp = record_audio()
-    # plot_spectrogram_usingmod(wav_path, timestamp)
+    run_night_recording()
+
 
 if __name__ == "__main__":
     main()

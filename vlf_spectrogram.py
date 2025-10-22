@@ -47,4 +47,4 @@ if __name__ == "__main__":
     parser.add_argument("--output", default="spectrogram.png", help="Output image file")
     parser.add_argument("--max_freq", type=int, default=10000, help="Max frequency to display")
     args = parser.parse_args()
-    plot_spectrogram(args.filename, args.output, args.max_freq)
+    plot_spectrogram(args.filename, args.filename.replace(".wav",".png"), args.max_freq)

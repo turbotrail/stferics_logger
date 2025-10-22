@@ -28,13 +28,14 @@ jobs:
           pip install --upgrade pip
           pip install -r "$TARGET_DIR/requirements.txt"
 
-      - name: Configure cron job
+      - name: Configure nightly 12h recorder cron
         run: |
           TARGET_DIR="$HOME/stferics_logger"
           VENV_DIR="$TARGET_DIR/venv"
           LOG_DIR="$TARGET_DIR/logs"
           mkdir -p "$LOG_DIR"
-          CRON_CMD="*/10 18-23,0-6 * * * cd $TARGET_DIR && $VENV_DIR/bin/python vlf_cron_sferic_logger.py >> $LOG_DIR/vlf.log 2>&1"
+          # Run once daily at 18:00 local time; script records until 06:00
+          CRON_CMD="0 18 * * * cd $TARGET_DIR && $VENV_DIR/bin/python vlf_cron_sferic_logger.py >> $LOG_DIR/vlf.log 2>&1"
 
           TMP_FILE=$(mktemp)
           if crontab -l >/dev/null 2>&1; then
