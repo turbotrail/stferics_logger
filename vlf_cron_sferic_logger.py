@@ -38,7 +38,7 @@ def plot_spectrogram_usingmod(wav_path, timestamp):
 
 def main():
     wav_path, timestamp = record_audio()
-    plot_spectrogram_usingmod(wav_path, timestamp)
+    # plot_spectrogram_usingmod(wav_path, timestamp)
 
 if __name__ == "__main__":
     main()
