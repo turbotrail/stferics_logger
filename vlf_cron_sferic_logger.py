@@ -6,6 +6,7 @@ import soundfile as sf
 from datetime import datetime
 from vlf_spectrogram import plot_spectrogram
 
+print(sd.query_devices())
 sd.default.device = (1, 1)
 
 RECORD_SECONDS = 120  # 2 minutes
