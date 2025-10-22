@@ -35,7 +35,7 @@ jobs:
           LOG_DIR="$TARGET_DIR/logs"
           mkdir -p "$LOG_DIR"
           # Run once daily at 18:00 local time; script records until 06:00
-          CRON_CMD="0 18 * * * cd $TARGET_DIR && $VENV_DIR/bin/python vlf_cron_sferic_logger.py >> $LOG_DIR/vlf.log 2>&1"
+          CRON_CMD="0 19 * * * cd $TARGET_DIR && $VENV_DIR/bin/python vlf_cron_sferic_logger.py >> $LOG_DIR/vlf.log 2>&1"
 
           TMP_FILE=$(mktemp)
           if crontab -l >/dev/null 2>&1; then
