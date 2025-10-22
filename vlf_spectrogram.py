@@ -1,27 +1,44 @@
 
 import argparse
+import matplotlib
+
+matplotlib.use("Agg")  # Avoid GUI backends on headless Raspberry Pi
+
 import matplotlib.pyplot as plt
 import numpy as np
 import soundfile as sf
 from scipy.signal import spectrogram
 
 def plot_spectrogram(filename, output="spectrogram.png", max_freq=10000):
-    # Load audio file
-    data, samplerate = sf.read(filename)
-    if data.ndim > 1:
-        data = data[:, 0]  # Use first channel if stereo
+    # Load audio file into float32 to halve memory footprint
+    data, samplerate = sf.read(filename, dtype="float32", always_2d=True)
+    data = data[:, 0]  # Use first channel if stereo
 
-    # Compute spectrogram
-    f, t, Sxx = spectrogram(data, fs=samplerate, nperseg=1024, noverlap=512)
-    plt.figure(figsize=(12, 6))
-    plt.pcolormesh(t, f, 10 * np.log10(Sxx), shading="gouraud", cmap="inferno")
+    # Compute spectrogram with larger window to reduce number of frames
+    f, t, Sxx = spectrogram(
+        data,
+        fs=samplerate,
+        nperseg=2048,
+        noverlap=1024,
+        detrend=False,
+        scaling="spectrum",
+        mode="magnitude",
+    )
+
+    # Convert to log scale using float32 to keep memory usage low
+    Sxx = np.maximum(Sxx.astype(np.float32, copy=False), 1e-12)
+    Sxx_db = 20 * np.log10(Sxx)
+
+    plt.figure(figsize=(10, 5))
+    plt.pcolormesh(t, f, Sxx_db, shading="gouraud", cmap="inferno")
     plt.ylabel("Frequency [Hz]")
     plt.xlabel("Time [s]")
     plt.ylim([0, max_freq])
-    plt.colorbar(label="Power [dB]")
+    plt.colorbar(label="Magnitude [dB]")
     plt.title("Spectrogram")
     plt.tight_layout()
-    plt.savefig(output)
+    plt.savefig(output, dpi=150)
+    plt.close()
     print(f"Spectrogram saved to {output}")
 
 if __name__ == "__main__":

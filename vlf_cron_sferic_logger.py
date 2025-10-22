@@ -6,6 +6,8 @@ import soundfile as sf
 from datetime import datetime
 from vlf_spectrogram import plot_spectrogram
 
+sd.default.device = (1, 1)
+
 RECORD_SECONDS = 120  # 2 minutes
 SAMPLE_RATE = 44100
 THRESHOLD_DB = -100  # dB threshold for burst detection
