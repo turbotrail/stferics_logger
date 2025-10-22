@@ -25,7 +25,7 @@ CHANNELS = 1
 FOLDER = "recordings"
 
 # Night window
-WINDOW_START = time(18, 0)  # 18:00 local time
+WINDOW_START = time(20,40)  # 18:00 local time
 WINDOW_END = time(6, 0)     # 06:00 next day
 TOTAL_HOURS = 12
 SEGMENT_HOURS = 1
