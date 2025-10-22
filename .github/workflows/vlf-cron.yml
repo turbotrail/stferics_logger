@@ -3,7 +3,7 @@ name: Configure VLF Cron
 on:
   push:
     branches:
-      - master  # Adjust if using a different default branch
+      - main  # Adjust if using a different default branch
   workflow_dispatch:
 
 jobs:
