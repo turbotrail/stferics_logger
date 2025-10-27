@@ -1,34 +1,34 @@
 import os
 import queue
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, timedelta
 
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
 
-# Optional: keep import available; spectrogram generation currently disabled
-# from vlf_spectrogram import plot_spectrogram
+from config import (
+    SAMPLE_RATE,
+    CHANNELS,
+    OUTPUT_FOLDER as FOLDER,
+    WINDOW_START,
+    WINDOW_END,
+    TOTAL_HOURS,
+    SEGMENT_HOURS,
+    LIST_DEVICES_ON_START,
+    get_device_tuple,
+)
 
 
-# Configure your input/output devices if needed
-# You can change this to match your system devices
+# Configure input/output devices from environment if provided
 try:
-    print(sd.query_devices())
-    # Example: (input_device_index, output_device_index)
-    sd.default.device = (1, 1)
+    if LIST_DEVICES_ON_START:
+        print(sd.query_devices())
+    device_tuple = get_device_tuple()
+    if device_tuple is not None:
+        sd.default.device = device_tuple
 except Exception as e:
     print(f"Audio device setup warning: {e}")
 
-
-SAMPLE_RATE = 44100
-CHANNELS = 1
-FOLDER = "recordings"
-
-# Night window
-WINDOW_START = time(20,40)  # 18:00 local time
-WINDOW_END = time(6, 0)     # 06:00 next day
-TOTAL_HOURS = 12
-SEGMENT_HOURS = 1
 
 os.makedirs(FOLDER, exist_ok=True)
 
