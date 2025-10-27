@@ -14,6 +14,7 @@ from config import (
     WINDOW_END,
     TOTAL_HOURS,
     SEGMENT_HOURS,
+    RUN_FOR_MINUTES,
     LIST_DEVICES_ON_START,
     get_device_tuple,
 )
@@ -130,7 +131,31 @@ def run_night_recording():
 
 
 def main():
-    run_night_recording()
+    # If RUN_FOR_MINUTES is set and positive, perform immediate one-off recording
+    try:
+        minutes = int(RUN_FOR_MINUTES) if RUN_FOR_MINUTES is not None else 0
+    except Exception:
+        minutes = 0
+
+    if minutes > 0:
+        total_seconds = minutes * 60
+        segment_seconds = SEGMENT_HOURS * 3600
+        print(f"Immediate recording for {minutes} minutes ({total_seconds}s) starting now...")
+        segment_start = datetime.now()
+        remaining = total_seconds
+        while remaining > 0:
+            duration = min(segment_seconds, remaining)
+            ts = timestamp_for_file(segment_start)
+            filename = os.path.join(FOLDER, f"{ts}.wav")
+            try:
+                record_stream_to_file(filename, duration_seconds=int(duration))
+            except Exception as e:
+                print(f"Error during immediate recording starting {segment_start}: {e}")
+            segment_start = datetime.now()
+            remaining -= duration
+        print("Immediate recording complete.")
+    else:
+        run_night_recording()
 
 
 if __name__ == "__main__":

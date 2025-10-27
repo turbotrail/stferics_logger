@@ -63,6 +63,9 @@ WINDOW_END: time = _parse_time_hhmm(os.getenv("WINDOW_END", "06:00"), time(6, 0)
 TOTAL_HOURS: int = _getenv_int("TOTAL_HOURS", 12) or 12
 SEGMENT_HOURS: int = _getenv_int("SEGMENT_HOURS", 1) or 1
 
+# Standalone immediate recording duration (in minutes); if set/positive, bypasses window schedule
+RUN_FOR_MINUTES: Optional[int] = _getenv_int("RUN_FOR_MINUTES", None)
+
 # Device configuration
 INPUT_DEVICE: Optional[int] = _getenv_int("INPUT_DEVICE", None)
 OUTPUT_DEVICE: Optional[int] = _getenv_int("OUTPUT_DEVICE", None)
@@ -93,4 +96,3 @@ def get_device_tuple() -> Optional[Tuple[Optional[int], Optional[int]]]:
     if INPUT_DEVICE is None and OUTPUT_DEVICE is None:
         return None
     return (INPUT_DEVICE, OUTPUT_DEVICE)
-
